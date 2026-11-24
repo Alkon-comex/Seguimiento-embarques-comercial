@@ -379,6 +379,13 @@ function parseGvizTable(headerTable, dataTable, filename, opts){
   (headerTable.rows[0] && headerTable.rows[0].c || []).forEach((cell,i)=>{ headerRow[i] = (cell && cell.v!==undefined) ? cell.v : null; });
   const cols = {};
   headerRow.forEach((v,i)=>{ if(typeof v==='string' && v.trim()!=='') cols[v.trim().toUpperCase()] = i; });
+  // si renombran la columna de ingreso (ej. AR: "delyvery date - INGRESO DEPOSITO"), tomar la única que la contenga
+  if(!(fechaCol in cols)){
+    // AR: "delyvery date - INGRESO DEPOSITO" — primero nombre completo, si no la única que contenga fechaCol
+    const exact = ['DELYVERY DATE - '+fechaCol, 'DELIVERY DATE - '+fechaCol].find(a=>a in cols);
+    const alt = exact ? [exact] : Object.keys(cols).filter(k=>k.includes(fechaCol));
+    if(alt.length===1) cols[fechaCol] = cols[alt[0]];
+  }
   const requiredHeaders = NEEDED_HEADERS.concat([fechaCol]);
   const missing = requiredHeaders.filter(h=>!(h in cols));
   if(missing.length) throw new Error("No se encontraron estas columnas en Google Sheets: "+missing.join(", "));
